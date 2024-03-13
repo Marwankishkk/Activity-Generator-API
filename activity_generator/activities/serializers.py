@@ -1,6 +1,14 @@
 
 from rest_framework import serializers
 from .models import *
+# Replace with your custom user model if applicable
+from django.contrib.auth.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta():
+        model = User
+        fields = "__all__"
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -18,3 +26,9 @@ class ActivitiesSerializer(serializers.ModelSerializer):
 
     def get_category_name(self, obj):
         return obj.category.title
+
+
+class PreferenceSerializer(serializers.ModelSerializer):
+    class Meta():
+        model = UserPreference
+        fields = ["category", "preferred_difficulty_level"]

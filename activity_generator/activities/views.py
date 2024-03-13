@@ -5,8 +5,10 @@ from .serializers import *
 from .models import *
 import random
 from django.http import Http404
+from django.contrib.auth.models import User
+from rest_framework.permissions import IsAuthenticated
 
-# Create your views here.
+# Create your views herfrom django.contrib.auth.models import User
 
 
 class CategoriesView(generics.ListCreateAPIView):
@@ -35,3 +37,39 @@ class RandomActivityView(generics.RetrieveAPIView):
         random_index = random.randint(0, total_activities - 1)
         random_activity = Activity.objects.all()[random_index]
         return random_activity
+
+
+class UsersView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class PrefrenceView(generics.ListAPIView):
+    serializer_class = ActivitiesSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Get the current user's preferences
+        user = self.request.user
+        try:
+            user_preference = UserPreference.objects.get(user=user)
+        except UserPreference.DoesNotExist:
+            # Handle the case where preferences are not set
+            return Activity.objects.none()
+
+        # Filter activities based on user preferences
+        queryset = Activity.objects.filter(
+            difficulty_level=user_preference.preferred_difficulty_level,
+            category=user_preference.category
+        )
+
+        return queryset
+
+
+class PreferenceCreateView(generics.CreateAPIView):
+    serializer_class = PreferenceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Set the user field to the currently signed-in user
+        serializer.save(user=self.request.user)
